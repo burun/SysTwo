@@ -14,6 +14,9 @@ export type SysTwoConfig = {
     claude: {
       modelPolicy: ClaudeModelPolicy;
     };
+    codex: {
+      modelPolicy: CodexModelPolicy;
+    };
   };
   permissions: {
     read: true;
@@ -60,6 +63,16 @@ export type ClaudeModelPolicy = {
   mode: ClaudeModelPolicyMode;
   tiers: Partial<Record<ClaudeModelTierName, ClaudeModelTier>>;
 };
+export type CodexModelPolicyMode = ModelPolicyMode;
+export type CodexModelTierName = ModelTierName;
+export type CodexModelTier = Pick<ModelTier, "model"> & {
+  fallbackModel?: never;
+  effort?: never;
+};
+export type CodexModelPolicy = {
+  mode: CodexModelPolicyMode;
+  tiers: Partial<Record<CodexModelTierName, CodexModelTier>>;
+};
 
 export const defaultConfig: SysTwoConfig = {
   routing: {
@@ -73,6 +86,12 @@ export const defaultConfig: SysTwoConfig = {
       }
     },
     claude: {
+      modelPolicy: {
+        mode: "auto",
+        tiers: {}
+      }
+    },
+    codex: {
       modelPolicy: {
         mode: "auto",
         tiers: {}
@@ -121,6 +140,12 @@ function mergeConfig(base: SysTwoConfig, next: Partial<SysTwoConfig>): SysTwoCon
         modelPolicy: {
           mode: next.providers?.claude?.modelPolicy?.mode ?? base.providers.claude.modelPolicy.mode,
           tiers: mergeModelTiers(base.providers.claude.modelPolicy.tiers, next.providers?.claude?.modelPolicy?.tiers)
+        }
+      },
+      codex: {
+        modelPolicy: {
+          mode: next.providers?.codex?.modelPolicy?.mode ?? base.providers.codex.modelPolicy.mode,
+          tiers: mergeModelTiers(base.providers.codex.modelPolicy.tiers, next.providers?.codex?.modelPolicy?.tiers)
         }
       }
     },

@@ -9,6 +9,7 @@ SysTwo provider adapters are intentionally narrow. A provider is an untrusted ru
 - `mock`: deterministic local provider used by `systwo demo`; no credentials or network required.
 - `codebuddy`: best-effort reference adapter. It is allowed to be unavailable and must not block the mock-provider demo.
 - `claude`: best-effort Claude Code CLI adapter. It is allowed to be unavailable and must not block the mock-provider demo.
+- `codex`: best-effort Codex CLI adapter. It lets controllers such as Claude Code delegate bounded work to Codex through the same SysTwo evidence and worktree boundary.
 
 ## Product Boundary
 
@@ -22,7 +23,7 @@ Non-coding tasks, broad research tasks, writing workflows, browser automation, a
 - Edit-capable work must run in a temporary worktree or `patch_only` mode.
 - `direct_read` and `patch_only` runs must not receive provider-side file mutation tools.
 - Providers must not commit, push, merge, tag, release, or apply generated patches to the main worktree.
-- Providers must be bounded by a timeout. CodeBuddy defaults to `SYSTWO_CODEBUDDY_TIMEOUT_MS=120000` and Claude Code defaults to `SYSTWO_CLAUDE_TIMEOUT_MS=120000` when no per-run timeout is supplied.
+- Providers must be bounded by a timeout. CodeBuddy defaults to `SYSTWO_CODEBUDDY_TIMEOUT_MS=120000`, Claude Code defaults to `SYSTWO_CLAUDE_TIMEOUT_MS=120000`, and Codex defaults to `SYSTWO_CODEX_TIMEOUT_MS=120000` when no per-run timeout is supplied.
 - Providers should not invoke their own sub-agents or nested delegation in V0. SysTwo's CodeBuddy and Claude Code adapters disallow common nested-agent tools and instruct the runner not to delegate further.
 - Providers should return estimated usage before work and actual usage only when the provider exposes it.
 - Provider-specific limitations must be reported in `doctor`, `riskNotes`, or documentation.
@@ -137,6 +138,61 @@ Policy behavior:
 - `auto`: never validates or overrides the Claude Code model.
 - `hybrid`: uses a configured tier when present; if the selected tier is absent, it leaves model choice to Claude Code.
 - `manual`: requires a configured selected tier with `model`.
+- Invalid explicit configuration fails the provider result. SysTwo does not silently fall back to auto for an invalid model policy.
+
+## Codex Adapter Controls
+
+SysTwo invokes Codex according to the official CLI reference: `codex exec` for non-interactive execution,
+`--json` for JSONL events, `--output-last-message` for the final natural-language response, `--cd` for the
+working directory, `--sandbox` for filesystem boundaries, `--ask-for-approval never` for non-interactive runs,
+and `--model` for optional model policy.
+
+Environment variables:
+
+- `SYSTWO_CODEX_BIN`: explicit path or command name for Codex.
+- `SYSTWO_CODEX_TIMEOUT_MS`: process timeout for Codex runs; default `120000`.
+- `SYSTWO_CODEX_APPROVAL_POLICY`: approval policy passed to `codex exec`; default `never`.
+
+Sandbox policy:
+
+- `direct_read` and `patch_only`: `--sandbox read-only`.
+- `temp_worktree`: `--sandbox workspace-write`.
+- SysTwo does not pass `--search`, so Codex keeps network use disabled under normal CLI defaults.
+- SysTwo still captures diff evidence and test evidence from the controller after the Codex run.
+
+### Codex Model Policy
+
+By default, SysTwo uses `providers.codex.modelPolicy.mode=auto`. In auto mode, SysTwo does not pass
+`--model`; Codex's own settings and environment decide the model.
+
+Users can opt into project or user configuration:
+
+```yaml
+providers:
+  codex:
+    modelPolicy:
+      mode: hybrid # auto | hybrid | manual
+      tiers:
+        low:
+          model: gpt-5-mini
+        medium:
+          model: gpt-5-codex
+        high:
+          model: gpt-5-codex
+```
+
+Tier selection follows the same routing presets as CodeBuddy and Claude Code:
+
+- `summarize_codebase` -> `low`
+- `draft_changes` -> `medium`
+- `fix_failures` -> `high`
+
+Policy behavior:
+
+- `auto`: never validates or overrides the Codex model.
+- `hybrid`: uses a configured tier when present; if the selected tier is absent, it leaves model choice to Codex.
+- `manual`: requires a configured selected tier with `model`.
+- Codex policy supports `model` only. `fallbackModel` and `effort` are rejected because `codex exec` does not expose matching CLI flags.
 - Invalid explicit configuration fails the provider result. SysTwo does not silently fall back to auto for an invalid model policy.
 
 ## Minimum Result Evidence
