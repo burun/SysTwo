@@ -376,6 +376,7 @@ V0 ships with:
 ```text
 mock provider
 CodeBuddy reference provider
+Claude Code reference provider
 ```
 
 Provider interface:

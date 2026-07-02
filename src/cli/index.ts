@@ -27,7 +27,7 @@ program.command("doctor").description("Check local SysTwo readiness.").action(as
     const mark = check.ok ? "ok" : "fail";
     console.log(`[${mark}] ${check.name}: ${check.message}`);
   }
-  if (checks.some((check) => !check.ok && check.name !== "provider:codebuddy")) {
+  if (checks.some((check) => !check.ok && !check.name.startsWith("provider:"))) {
     process.exitCode = 1;
   }
 });

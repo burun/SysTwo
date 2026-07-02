@@ -11,6 +11,9 @@ export type SysTwoConfig = {
     codebuddy: {
       modelPolicy: CodeBuddyModelPolicy;
     };
+    claude: {
+      modelPolicy: ClaudeModelPolicy;
+    };
   };
   permissions: {
     read: true;
@@ -29,19 +32,33 @@ export type SysTwoConfig = {
   };
 };
 
-export type CodeBuddyModelPolicyMode = "auto" | "hybrid" | "manual";
-export type CodeBuddyModelTierName = "low" | "medium" | "high";
-export type CodeBuddyEffort = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+export type ModelPolicyMode = "auto" | "hybrid" | "manual";
+export type ModelTierName = "low" | "medium" | "high";
+export type ModelEffort = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
-export type CodeBuddyModelTier = {
+export type ModelTier = {
   model?: string;
   fallbackModel?: string;
-  effort?: CodeBuddyEffort;
+  effort?: ModelEffort;
 };
 
-export type CodeBuddyModelPolicy = {
-  mode: CodeBuddyModelPolicyMode;
-  tiers: Partial<Record<CodeBuddyModelTierName, CodeBuddyModelTier>>;
+export type ModelPolicy = {
+  mode: ModelPolicyMode;
+  tiers: Partial<Record<ModelTierName, ModelTier>>;
+};
+
+export type CodeBuddyModelPolicyMode = ModelPolicyMode;
+export type CodeBuddyModelTierName = ModelTierName;
+export type CodeBuddyEffort = ModelEffort;
+export type CodeBuddyModelTier = ModelTier;
+export type CodeBuddyModelPolicy = ModelPolicy;
+export type ClaudeModelPolicyMode = ModelPolicyMode;
+export type ClaudeModelTierName = ModelTierName;
+export type ClaudeEffort = Exclude<ModelEffort, "minimal">;
+export type ClaudeModelTier = Omit<ModelTier, "effort"> & { effort?: ClaudeEffort };
+export type ClaudeModelPolicy = {
+  mode: ClaudeModelPolicyMode;
+  tiers: Partial<Record<ClaudeModelTierName, ClaudeModelTier>>;
 };
 
 export const defaultConfig: SysTwoConfig = {
@@ -50,6 +67,12 @@ export const defaultConfig: SysTwoConfig = {
   },
   providers: {
     codebuddy: {
+      modelPolicy: {
+        mode: "auto",
+        tiers: {}
+      }
+    },
+    claude: {
       modelPolicy: {
         mode: "auto",
         tiers: {}
@@ -88,10 +111,16 @@ function mergeConfig(base: SysTwoConfig, next: Partial<SysTwoConfig>): SysTwoCon
       codebuddy: {
         modelPolicy: {
           mode: next.providers?.codebuddy?.modelPolicy?.mode ?? base.providers.codebuddy.modelPolicy.mode,
-          tiers: mergeCodeBuddyModelTiers(
+          tiers: mergeModelTiers(
             base.providers.codebuddy.modelPolicy.tiers,
             next.providers?.codebuddy?.modelPolicy?.tiers
           )
+        }
+      },
+      claude: {
+        modelPolicy: {
+          mode: next.providers?.claude?.modelPolicy?.mode ?? base.providers.claude.modelPolicy.mode,
+          tiers: mergeModelTiers(base.providers.claude.modelPolicy.tiers, next.providers?.claude?.modelPolicy?.tiers)
         }
       }
     },
@@ -106,17 +135,17 @@ function mergeConfig(base: SysTwoConfig, next: Partial<SysTwoConfig>): SysTwoCon
   };
 }
 
-function mergeCodeBuddyModelTiers(
-  base: CodeBuddyModelPolicy["tiers"],
-  next?: CodeBuddyModelPolicy["tiers"]
-): CodeBuddyModelPolicy["tiers"] {
+function mergeModelTiers<Tier extends { model?: string; fallbackModel?: string; effort?: string }>(
+  base: Partial<Record<ModelTierName, Tier>>,
+  next?: Partial<Record<ModelTierName, Tier>>
+): Partial<Record<ModelTierName, Tier>> {
   if (!next) {
     return { ...base };
   }
   return {
-    low: { ...base.low, ...next.low },
-    medium: { ...base.medium, ...next.medium },
-    high: { ...base.high, ...next.high }
+    low: { ...base.low, ...next.low } as Tier,
+    medium: { ...base.medium, ...next.medium } as Tier,
+    high: { ...base.high, ...next.high } as Tier
   };
 }
 

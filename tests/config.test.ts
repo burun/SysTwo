@@ -10,9 +10,13 @@ describe("configuration", () => {
       mode: "auto",
       tiers: {}
     });
+    expect(defaultConfig.providers.claude.modelPolicy).toEqual({
+      mode: "auto",
+      tiers: {}
+    });
   });
 
-  it("loads project CodeBuddy model policy tiers from systwo.yaml", async () => {
+  it("loads project provider model policy tiers from systwo.yaml", async () => {
     const repo = await mkdtemp(join(tmpdir(), "systwo-config-"));
     await mkdir(join(repo, ".git"));
     await writeFile(
@@ -29,6 +33,14 @@ describe("configuration", () => {
         "        high:",
         "          model: deepseek-v4-pro",
         "          fallbackModel: glm-5.0-turbo",
+        "          effort: high",
+        "  claude:",
+        "    modelPolicy:",
+        "      mode: manual",
+        "      tiers:",
+        "        high:",
+        "          model: sonnet",
+        "          fallbackModel: haiku",
         "          effort: high"
       ].join("\n")
     );
@@ -43,6 +55,12 @@ describe("configuration", () => {
     expect(config.providers.codebuddy.modelPolicy.tiers.high).toEqual({
       model: "deepseek-v4-pro",
       fallbackModel: "glm-5.0-turbo",
+      effort: "high"
+    });
+    expect(config.providers.claude.modelPolicy.mode).toBe("manual");
+    expect(config.providers.claude.modelPolicy.tiers.high).toEqual({
+      model: "sonnet",
+      fallbackModel: "haiku",
       effort: "high"
     });
   });
