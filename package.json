@@ -1,0 +1,44 @@
+{
+  "name": "systwo",
+  "version": "0.1.0-rc.0",
+  "description": "Open-source MCP server for safe, cost-aware delegation in coding workflows.",
+  "type": "module",
+  "bin": {
+    "systwo": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/cli/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "coding-agent",
+    "delegation",
+    "worktree",
+    "safety"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "yaml": "^2.5.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.9"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
