@@ -51,13 +51,13 @@ Controller agent
   -> Controller agent reviews and decides
 ```
 
-For V0, the reference controller is Codex and the reference runner providers are CodeBuddy and Claude Code. They are examples, not hard requirements.
+For V0, the reference controller is Codex and the reference runner providers are CodeBuddy, Claude Code, and Codex itself. They are examples, not hard requirements.
 
 The long-term goal is for SysTwo to work with many controllers and runner providers:
 
 ```text
 Controllers: Codex, Claude Code, OpenCode, custom MCP clients
-Runners: CodeBuddy, Claude Code, OpenCode, Aider, local models, custom CLIs
+Runners: CodeBuddy, Claude Code, Codex, OpenCode, Aider, local models, custom CLIs
 ```
 
 ## Demo Goal
@@ -165,7 +165,7 @@ Current V0 release-candidate scope:
 - TypeScript MCP server.
 - Global npm install package shape.
 - `npx systwo demo` with mock provider.
-- Best-effort CodeBuddy and Claude Code reference providers.
+- Best-effort CodeBuddy, Claude Code, and Codex reference providers.
 - Temporary-worktree execution.
 - `route_task`, `delegate_task`, `usage_report`.
 - Presets for `summarize_codebase`, `draft_changes`, and `fix_failures`.

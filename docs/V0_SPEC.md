@@ -377,6 +377,7 @@ V0 ships with:
 mock provider
 CodeBuddy reference provider
 Claude Code reference provider
+Codex reference provider
 ```
 
 Provider interface:
@@ -576,6 +577,8 @@ src/
   providers/
     mock/
     codebuddy/
+    claude/
+    codex/
   worktrees/
   traces/
 docs/

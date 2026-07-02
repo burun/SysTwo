@@ -2,9 +2,6 @@ import { execFile } from "node:child_process";
 import { access } from "node:fs/promises";
 import { delimiter, join } from "node:path";
 import { constants } from "node:fs";
-import { promisify } from "node:util";
-
-const execFileAsync = promisify(execFile);
 
 export type CommandResult = {
   stdout: string;
@@ -15,15 +12,24 @@ export type CommandResult = {
 export async function runCommand(
   command: string,
   args: string[],
-  options: { cwd?: string; timeoutMs?: number; allowFailure?: boolean } = {}
+  options: { cwd?: string; timeoutMs?: number; allowFailure?: boolean; stdin?: string } = {}
 ): Promise<CommandResult> {
   try {
-    const result = await execFileAsync(command, args, {
-      cwd: options.cwd,
-      timeout: options.timeoutMs ?? 30000,
-      maxBuffer: 10 * 1024 * 1024
+    const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+      const child = execFile(command, args, {
+        cwd: options.cwd,
+        timeout: options.timeoutMs ?? 30000,
+        maxBuffer: 10 * 1024 * 1024
+      }, (error, stdout, stderr) => {
+        if (error) {
+          reject(Object.assign(error, { stdout, stderr }));
+          return;
+        }
+        resolve({ stdout: String(stdout), stderr: String(stderr) });
+      });
+      child.stdin?.end(options.stdin ?? "");
     });
-    return { stdout: String(result.stdout), stderr: String(result.stderr), exitCode: 0 };
+    return { stdout: result.stdout, stderr: result.stderr, exitCode: 0 };
   } catch (error: unknown) {
     const nodeError = error as NodeJS.ErrnoException & {
       stdout?: string;

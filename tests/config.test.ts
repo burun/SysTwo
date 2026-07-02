@@ -14,6 +14,10 @@ describe("configuration", () => {
       mode: "auto",
       tiers: {}
     });
+    expect(defaultConfig.providers.codex.modelPolicy).toEqual({
+      mode: "auto",
+      tiers: {}
+    });
   });
 
   it("loads project provider model policy tiers from systwo.yaml", async () => {
@@ -41,7 +45,13 @@ describe("configuration", () => {
         "        high:",
         "          model: sonnet",
         "          fallbackModel: haiku",
-        "          effort: high"
+        "          effort: high",
+        "  codex:",
+        "    modelPolicy:",
+        "      mode: hybrid",
+        "      tiers:",
+        "        medium:",
+        "          model: gpt-5-codex"
       ].join("\n")
     );
 
@@ -62,6 +72,10 @@ describe("configuration", () => {
       model: "sonnet",
       fallbackModel: "haiku",
       effort: "high"
+    });
+    expect(config.providers.codex.modelPolicy.mode).toBe("hybrid");
+    expect(config.providers.codex.modelPolicy.tiers.medium).toEqual({
+      model: "gpt-5-codex"
     });
   });
 });
