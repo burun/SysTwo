@@ -2,10 +2,12 @@ import type { Provider } from "../core/types.js";
 import { SysTwoError } from "../core/errors.js";
 import { mockProvider } from "./mock/provider.js";
 import { codeBuddyProvider } from "./codebuddy/provider.js";
+import { claudeProvider } from "./claude/provider.js";
 
 const providers = new Map<string, Provider>([
   [mockProvider.id, mockProvider],
-  [codeBuddyProvider.id, codeBuddyProvider]
+  [codeBuddyProvider.id, codeBuddyProvider],
+  [claudeProvider.id, claudeProvider]
 ]);
 
 export function getProvider(id = "mock"): Provider {
