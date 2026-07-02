@@ -2,7 +2,7 @@
 
 Thanks for helping make SysTwo safer and more useful.
 
-SysTwo is currently a design-draft / pre-alpha project. The most valuable contributions are ones that clarify the V0 safety boundary, strengthen tests, improve provider adapter contracts, or make the documentation more accurate.
+SysTwo is currently a V0 release-candidate project. The most valuable contributions are ones that clarify the V0 safety boundary, strengthen tests, improve provider adapter contracts, or make the documentation more accurate.
 
 ## Ground Rules
 
@@ -24,10 +24,13 @@ SysTwo is currently a design-draft / pre-alpha project. The most valuable contri
 
 ## Development Workflow
 
-The implementation is still being shaped. Until the package structure is committed, use the V0 spec as the source of truth:
+Use the V0 spec and implementation tests as the source of truth:
 
 - [docs/V0_SPEC.md](docs/V0_SPEC.md)
 - [SECURITY.md](SECURITY.md)
+- [docs/PROVIDER_ADAPTERS.md](docs/PROVIDER_ADAPTERS.md)
+- [docs/ROUTING_POLICY.md](docs/ROUTING_POLICY.md)
+- [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)
 
 When code lands, contributions should include:
 

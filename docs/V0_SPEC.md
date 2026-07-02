@@ -103,6 +103,7 @@ V0 should keep the public MCP surface small:
 ```text
 route_task
 delegate_task
+route_then_delegate
 usage_report
 ```
 
@@ -145,6 +146,9 @@ type RouteTaskOutput = {
   recommendedMode: "answer_directly" | "delegate" | "decline";
   recommendedPreset?: "summarize_codebase" | "draft_changes" | "fix_failures";
   recommendedProvider?: string;
+  recommendedExecutionMode?: "answer_directly" | "direct_read" | "patch_only" | "temp_worktree";
+  delegationValue: "low" | "medium" | "high";
+  friction: "none" | "patch_only" | "worktree";
   permissions: Permission[];
   risk: "low" | "medium" | "high";
   estimatedUsage: UsageEstimate;
@@ -159,6 +163,17 @@ Hard rule:
 route_task cannot trigger delegate_task internally.
 ```
 
+### 7.1.1 `route_then_delegate`
+
+Purpose: conservative convenience helper for clients that want one call for high-value bounded fixes.
+
+Rules:
+
+- It must call the same deterministic router first.
+- It delegates only when the route recommends `delegate` with `delegationValue=high`.
+- It must return `not_delegated` for answer-directly, decline, low-value, medium-value, or non-delegate recommendations.
+- It must call `delegate_task` with the same policy and provider-adapter constraints.
+
 ### 7.2 `delegate_task`
 
 Purpose: delegate bounded execution to a provider.
@@ -170,7 +185,7 @@ type DelegateTaskInput = {
   brief: TaskBrief;
   provider?: string;
   preset?: "summarize_codebase" | "draft_changes" | "fix_failures";
-  mode?: "temp_worktree" | "patch_only";
+  mode?: "direct_read" | "temp_worktree" | "patch_only";
 };
 ```
 
@@ -185,6 +200,7 @@ Rules:
 - The controller must call this explicitly.
 - Edit-capable work must use `temp_worktree` or `patch_only`.
 - Main worktree edits are forbidden in V0.
+- `direct_read` is for delegated read-only context gathering and is rejected for edit-capable tasks.
 - `patch_only` skips provider-side file mutation and returns a patch proposal.
 
 ### 7.3 `usage_report`
@@ -224,21 +240,23 @@ Purpose: produce a proposed patch.
 Default mode:
 
 ```text
-temp_worktree
+patch_only
 ```
 
-Safe mode:
+Escalation mode:
 
 ```text
-patch_only
+temp_worktree
 ```
 
 Required output:
 
 - summary
-- diff path
-- changed files
+- patch proposal or diff path
+- changed files when a temp worktree is used
 - risk notes
+
+Empty `patch_only` results are failed delegations because there is no reviewable patch proposal.
 - usage estimate
 
 ### `fix_failures`
@@ -390,7 +408,7 @@ Run options:
 type RunOptions = {
   repoPath: string;
   worktreePath?: string;
-  mode: "temp_worktree" | "patch_only";
+  mode: "direct_read" | "temp_worktree" | "patch_only";
   timeoutMs?: number;
   networkAllowed: boolean;
   traceId: string;
@@ -490,7 +508,7 @@ V0 must handle:
 - concurrency limits
 - disk usage warnings
 
-Default behavior:
+Default behavior when `temp_worktree` is selected:
 
 ```text
 create temp worktree

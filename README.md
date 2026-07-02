@@ -2,9 +2,9 @@
 
 SysTwo is an open-source MCP server for safe, cost-aware delegation in agentic coding workflows.
 
-It helps a high-value controller agent delegate bounded coding work to lower-cost runner providers while preserving review, permissions, traces, usage records, and temporary-worktree isolation.
+It helps a high-value controller agent decide when to handle work directly, when to request a patch-only proposal, and when to delegate bounded coding work to lower-cost runner providers with temporary-worktree isolation.
 
-> Status: design draft / pre-alpha. The V0 contracts below describe the intended public shape; implementation is in progress.
+> Status: V0 release-candidate implementation. The mock-provider demo and safety tests are the current release gate.
 
 ## Why SysTwo
 
@@ -25,13 +25,14 @@ SysTwo is:
 - An MCP server for coding-agent delegation.
 - A token-value router for task steps, not just model calls.
 - A policy layer for permissions and safety floors.
-- A temporary-worktree execution boundary.
+- A friction-aware execution selector for direct handling, read-only delegation, patch-only proposals, and temporary worktrees.
 - A usage and evidence recorder.
 - A provider-neutral adapter surface for runner agents.
 
 SysTwo is not:
 
 - A replacement for Codex, Claude Code, OpenCode, Aider, or other coding agents.
+- A generic task router for every task Codex can perform.
 - A general multi-agent framework.
 - A model gateway.
 - An observability platform.
@@ -43,10 +44,10 @@ SysTwo is not:
 Controller agent
   -> SysTwo MCP server
     -> route task by value, risk, and permissions
-    -> delegate bounded work to a runner provider
-      -> create temporary git worktree
-      -> search / edit / test / summarize logs
-    -> return diff, evidence, trace, and usage
+    -> choose direct handling, patch-only, or temporary-worktree isolation
+    -> optionally delegate bounded work to a runner provider
+      -> search / draft patch / edit in a temp worktree / test / summarize logs
+    -> return patch or diff evidence, trace, and usage
   -> Controller agent reviews and decides
 ```
 
@@ -91,7 +92,19 @@ The intended zero-config demo is:
 npx systwo demo
 ```
 
-The demo should run with a mock provider so new users can inspect the worktree-to-diff-to-review loop before connecting any real agent, API, or paid provider.
+The demo runs with a mock provider so new users can inspect the worktree-to-diff-to-review loop before connecting any real agent, API, or paid provider.
+
+## Local Development
+
+```bash
+npm install
+npm run build
+npm test
+npx systwo doctor
+npx systwo demo
+```
+
+The release-candidate demo creates a temporary git repository with a failing `node test.js`, asks `route_task` for advice, explicitly calls `delegate_task`, runs the mock provider in a temporary worktree, and returns diff/test/usage evidence for review.
 
 ## MCP Tools
 
@@ -99,7 +112,16 @@ V0 exposes a small tool surface:
 
 - `route_task`: returns routing advice only; it does not execute work.
 - `delegate_task`: delegates a bounded task to a runner provider.
+- `route_then_delegate`: conservative convenience helper that routes first and only delegates high-value delegate recommendations.
 - `usage_report`: reports estimated usage and actual usage when available.
+
+`route_then_delegate` is optional. It preserves the V0 boundary by refusing low-value or non-delegate recommendations instead of invoking a provider.
+
+`route_task` includes a friction-adjusted recommendation:
+
+- `answer_directly` for low-value read-only work that the controller can handle.
+- `patch_only` for bounded draft changes where a reviewable proposal is enough.
+- `temp_worktree` for edit-capable fixes that need isolated file mutation and test evidence.
 
 Task-specific behavior is represented through presets rather than a large public API:
 
@@ -138,16 +160,19 @@ See [SECURITY.md](SECURITY.md) for the current security posture and threat model
 
 ## V0 Roadmap
 
+Current V0 release-candidate scope:
+
 - TypeScript MCP server.
-- Global npm install.
+- Global npm install package shape.
 - `npx systwo demo` with mock provider.
-- CodeBuddy reference provider.
+- Best-effort CodeBuddy reference provider.
 - Temporary-worktree execution.
 - `route_task`, `delegate_task`, `usage_report`.
 - Presets for `summarize_codebase`, `draft_changes`, and `fix_failures`.
 - Usage estimate before execution.
-- Actual usage when providers expose it.
-- Safety and threat model docs.
+- Actual usage when providers expose it; otherwise `unavailable`.
+- Delegated usage summary for controller final responses.
+- Safety, routing, provider-adapter, and threat-model docs.
 - Safety tests for main-worktree isolation.
 
 ## Contributing
