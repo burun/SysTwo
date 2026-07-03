@@ -3,6 +3,20 @@
   "version": "0.1.0-rc.0",
   "description": "Open-source MCP server for safe, cost-aware delegation in coding workflows.",
   "type": "module",
+  "exports": {
+    "./core/types": {
+      "types": "./dist/core/types.d.ts",
+      "default": "./dist/core/types.js"
+    },
+    "./providers/cli/adapter": {
+      "types": "./dist/providers/cli/adapter.d.ts",
+      "default": "./dist/providers/cli/adapter.js"
+    },
+    "./providers/manifest": {
+      "types": "./dist/providers/manifest.d.ts",
+      "default": "./dist/providers/manifest.js"
+    }
+  },
   "bin": {
     "systwo": "./dist/cli/index.js"
   },

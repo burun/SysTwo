@@ -28,6 +28,60 @@ Non-coding tasks, broad research tasks, writing workflows, browser automation, a
 - Providers should return estimated usage before work and actual usage only when the provider exposes it.
 - Provider-specific limitations must be reported in `doctor`, `riskNotes`, or documentation.
 
+## Shared CLI Adapter Contract
+
+Reference CLI providers share one internal execution contract:
+
+1. Resolve the command from an explicit environment variable first, then provider-specific fallback command names.
+2. Resolve model policy from SysTwo config using `auto | hybrid | manual` and `low | medium | high` tiers.
+3. Fail invalid explicit model policy configuration instead of silently falling back to auto.
+4. Build provider-specific CLI arguments from a common bounded task prompt and the requested execution mode.
+5. Run the command with a bounded timeout in the selected repository or temporary worktree.
+6. Parse structured provider output for final text, permission denials, and actual usage when available.
+7. Return a `TaskResult` whose output is treated as data and whose `patch_only` result must contain a non-empty patch proposal.
+
+Provider adapters still own their CLI-specific details. CodeBuddy and Claude Code use JSON output with tool allow/deny flags. Codex uses JSONL events plus an output-last-message file and sandbox flags. Providers may also differ in supported model policy flags; Codex supports `model` only, while CodeBuddy and Claude Code support `model`, `fallbackModel`, and `effort`.
+
+## Community Provider Workflow
+
+New providers should start from a scaffold instead of copying a full built-in adapter:
+
+```bash
+systwo provider init aider
+```
+
+The scaffold creates a provider folder with:
+
+- `manifest.json`: the adapter declaration SysTwo uses to understand provider identity, command discovery, supported modes, model policy flags, output format, and known limitations.
+- `provider.ts`: a thin adapter template built around the shared CLI adapter contract.
+- `provider.test.ts`: a starting manifest-contract test.
+- `README.md`: a checklist for provider-specific safety notes and verification.
+
+Adapter packages can import the supported authoring surface from:
+
+- `systwo/providers/cli/adapter`
+- `systwo/providers/manifest`
+- `systwo/core/types`
+
+Provider manifests must describe the integration before behavior is added. The stable fields are:
+
+- `id` and `displayName`
+- `kind: "cli"`
+- `commands.envVar` and `commands.candidates`
+- `capabilities`
+- `modes.direct_read`, `modes.patch_only`, and `modes.temp_worktree`
+- `modelPolicy.supportsModel`, `supportsFallbackModel`, `supportsEffort`, and optional `supportedEfforts`
+- `output.format` and `output.usage`
+- `limitations`
+
+Before publishing or opening a provider PR, run the conformance suite:
+
+```bash
+systwo provider conformance --provider mock
+```
+
+For a real provider, replace `mock` with the registered provider id. The suite checks the minimum SysTwo contract: `direct_read` does not mutate the main worktree, `patch_only` returns a non-empty proposal, and `temp_worktree` returns diff evidence plus passing test evidence. Providers that cannot pass one of these checks should document the limitation and keep the unsupported mode disabled in their manifest.
+
 ## CodeBuddy Adapter Controls
 
 Environment variables:
