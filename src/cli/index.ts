@@ -10,6 +10,8 @@ import { loadConfig } from "../config/config.js";
 import { routeTask } from "../router/router.js";
 import { delegateTask } from "../core/delegate.js";
 import { routeThenDelegateTask } from "../core/route-then-delegate.js";
+import { initProviderScaffold } from "../providers/scaffold.js";
+import { runProviderConformance } from "../providers/conformance.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(join(__dirname, "..", "..", "package.json"), "utf8")) as { version: string };
@@ -69,6 +71,41 @@ program
       return;
     }
     console.log(JSON.stringify(routeTask(parsed as never, loadConfig(process.cwd())), null, 2));
+  });
+
+const provider = program.command("provider").description("Create and verify SysTwo provider adapters.");
+
+provider
+  .command("init")
+  .description("Create a starter scaffold for a community provider adapter.")
+  .argument("<id>", "Provider id, for example aider or opencode.")
+  .option("--dir <path>", "Directory where the provider folder should be created.", "providers")
+  .option("--force", "Overwrite generated template files when the directory already exists.")
+  .action(async (id: string, options: { dir: string; force?: boolean }) => {
+    const result = await initProviderScaffold({
+      id,
+      rootDir: options.dir,
+      force: options.force
+    });
+    console.log(`created provider scaffold: ${result.providerDir}`);
+    for (const file of result.files) {
+      console.log(`- ${file}`);
+    }
+  });
+
+provider
+  .command("conformance")
+  .description("Run the minimum SysTwo provider conformance checks against a registered provider.")
+  .requiredOption("--provider <id>", "Registered provider id to test.")
+  .action(async (options: { provider: string }) => {
+    const checks = await runProviderConformance(options.provider);
+    for (const check of checks) {
+      const mark = check.ok ? "ok" : "fail";
+      console.log(`[${mark}] ${check.name}: ${check.message}`);
+    }
+    if (checks.some((check) => !check.ok)) {
+      process.exitCode = 1;
+    }
   });
 
 program.parseAsync(process.argv).catch((error) => {

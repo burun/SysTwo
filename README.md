@@ -28,6 +28,7 @@ SysTwo is:
 - A friction-aware execution selector for direct handling, read-only delegation, patch-only proposals, and temporary worktrees.
 - A usage and evidence recorder.
 - A provider-neutral adapter surface for runner agents.
+- A community-provider path with adapter scaffolding and conformance checks.
 
 SysTwo is not:
 
@@ -173,6 +174,7 @@ Current V0 release-candidate scope:
 - Actual usage when providers expose it; otherwise `unavailable`.
 - Delegated usage summary for controller final responses.
 - Safety, routing, provider-adapter, and threat-model docs.
+- Provider adapter scaffolding through `systwo provider init` and baseline checks through `systwo provider conformance`.
 - Safety tests for main-worktree isolation.
 
 ## Contributing
