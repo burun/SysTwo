@@ -20,7 +20,8 @@ export const codexProvider = createCliProvider<CodexModelPolicy>({
   capabilities: ["code_search", "draft_patch", "test_retry", "mechanical_fix"],
   command: {
     envVar: "SYSTWO_CODEX_BIN",
-    candidates: ["codex"]
+    // The Codex desktop app bundles the CLI without putting it on PATH.
+    candidates: ["codex", "/Applications/Codex.app/Contents/Resources/codex"]
   },
   estimateBasis: "Heuristic estimate; Codex actual usage is collected from codex exec JSONL events when available.",
   doctorMessage(command) {
