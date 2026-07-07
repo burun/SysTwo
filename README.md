@@ -161,6 +161,7 @@ See [SECURITY.md](SECURITY.md) for the current security posture and threat model
 - [docs/ENFORCEMENT_MATRIX.md](docs/ENFORCEMENT_MATRIX.md): how each safety-floor rule is actually enforced today.
 - [docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md): reference Claude Code → cross-vendor runner workflow with the usage ledger.
 - [docs/BENCHMARKS.md](docs/BENCHMARKS.md): `systwo bench` methodology — measured quality and cost per runner cell on bounded delegation scenarios.
+- [docs/MATRIX.md](docs/MATRIX.md): archived date-stamped bench matrices with observations.
 
 ## V0 Roadmap
 
