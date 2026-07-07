@@ -133,6 +133,8 @@ export async function delegateTask(rawInput: DelegateTaskInput, repoPath = proce
       traceId,
       timestamp: new Date().toISOString(),
       provider: provider.id,
+      model: parsed.model,
+      modelTier: parsed.modelTier,
       preset: normalizedInput.brief.preset,
       mode: normalizedInput.mode,
       status: parsed.status,

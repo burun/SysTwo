@@ -13,6 +13,7 @@ import { routeThenDelegateTask } from "../core/route-then-delegate.js";
 import { initProviderScaffold } from "../providers/scaffold.js";
 import { runProviderConformance } from "../providers/conformance.js";
 import { readLedger, summarizeLedger } from "../usage/ledger.js";
+import { parseCells, runBench, writeBenchOutputs } from "../bench/bench.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(join(__dirname, "..", "..", "package.json"), "utf8")) as { version: string };
@@ -76,6 +77,29 @@ program
       return;
     }
     console.log(JSON.stringify(routeTask(parsed as never, loadConfig(process.cwd())), null, 2));
+  });
+
+program
+  .command("bench")
+  .description("Run the delegation benchmark matrix across provider[:model] cells.")
+  .option("--cells <list>", "Comma-separated provider[:model] cells, e.g. claude,codebuddy:some-model,codex.", "mock")
+  .option("--scenarios <list>", "Comma-separated scenario ids, or 'all'.", "all")
+  .option("--runs <n>", "Repetitions per scenario × cell.", "3")
+  .option("--out <dir>", "Directory for results JSONL and matrix markdown.", ".systwo/bench")
+  .action(async (options: { cells: string; scenarios: string; runs: string; out: string }) => {
+    const outcome = await runBench({
+      cells: parseCells(options.cells),
+      scenarios: options.scenarios,
+      runs: Number(options.runs),
+      log: (line) => console.error(line)
+    });
+    const outputs = await writeBenchOutputs(options.out, outcome);
+    console.log(outcome.matrixMarkdown);
+    console.log(`results: ${outputs.resultsPath}`);
+    console.log(`matrix: ${outputs.matrixPath}`);
+    if (outcome.records.some((record) => !record.pass)) {
+      process.exitCode = 0; // failures are data points, not command errors
+    }
   });
 
 program

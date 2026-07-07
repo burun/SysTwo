@@ -95,6 +95,8 @@ export const TaskResultSchema = z.object({
   status: z.enum(["success", "failed", "needs_review"]),
   summary: z.string(),
   provider: z.string(),
+  model: z.string().optional(),
+  modelTier: z.enum(["low", "medium", "high"]).optional(),
   traceId: z.string(),
   worktreePath: z.string().optional(),
   diffPath: z.string().optional(),

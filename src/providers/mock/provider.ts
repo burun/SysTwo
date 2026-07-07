@@ -28,6 +28,7 @@ export const mockProvider: Provider = {
         status: "needs_review",
         summary: "Mock provider produced a patch-only proposal.",
         provider: "mock",
+        model: "deterministic",
         traceId: options.traceId,
         inlinePatch: createPatchOnlyProposal(input),
         usage: { estimated, actual: unavailableActualUsage() },
@@ -40,6 +41,7 @@ export const mockProvider: Provider = {
         status: "success",
         summary: "Mock provider summarized the bounded task without editing files.",
         provider: "mock",
+        model: "deterministic",
         traceId: options.traceId,
         worktreePath: options.worktreePath,
         usage: { estimated, actual: unavailableActualUsage() },
@@ -51,7 +53,9 @@ export const mockProvider: Provider = {
     let testEvidence = undefined;
     if (input.testCommand) {
       const test = await runTestCommand(input.testCommand, cwd);
-      const outputPath = join(cwd, ".systwo-test-output.txt");
+      const outputDir = join(cwd, ".systwo");
+      await mkdir(outputDir, { recursive: true });
+      const outputPath = join(outputDir, "mock-test-output.txt");
       await writeFile(outputPath, test.output || "(no output)");
       testEvidence = {
         command: input.testCommand,
@@ -66,6 +70,7 @@ export const mockProvider: Provider = {
       status: testEvidence?.status === "failed" ? "failed" : "success",
       summary: "Mock provider completed the delegated task in the temporary worktree.",
       provider: "mock",
+      model: "deterministic",
       traceId: options.traceId,
       worktreePath: options.worktreePath,
       testEvidence,

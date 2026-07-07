@@ -9,6 +9,8 @@ export type LedgerEntry = {
   traceId: string;
   timestamp: string;
   provider: string;
+  model?: string;
+  modelTier?: string;
   preset?: string;
   mode: string;
   status: TaskResult["status"];

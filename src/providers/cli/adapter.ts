@@ -139,6 +139,8 @@ export function createCliProvider<ModelPolicy>(spec: CliProviderSpec<ModelPolicy
               ? summarizeCliOutput(spec.displayName, resultText, options.mode, spec.summarizeOutput)
               : summarizeCliFailure(spec.displayName, result.stderr || resultText || result.stdout, modelResolution, spec.summarizeFailure),
           provider: spec.id,
+          model: modelResolution.model,
+          modelTier: modelResolution.tierName,
           traceId: options.traceId,
           worktreePath: options.worktreePath,
           inlinePatch: options.mode === "patch_only" && result.exitCode === 0 && resultText.trim() ? resultText : undefined,

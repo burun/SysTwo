@@ -160,6 +160,7 @@ See [SECURITY.md](SECURITY.md) for the current security posture and threat model
 - [docs/RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md): positioning references and adjacent projects.
 - [docs/ENFORCEMENT_MATRIX.md](docs/ENFORCEMENT_MATRIX.md): how each safety-floor rule is actually enforced today.
 - [docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md): reference Claude Code → cross-vendor runner workflow with the usage ledger.
+- [docs/BENCHMARKS.md](docs/BENCHMARKS.md): `systwo bench` methodology — measured quality and cost per runner cell on bounded delegation scenarios.
 
 ## V0 Roadmap
 
@@ -176,6 +177,7 @@ Current V0 release-candidate scope:
 - Actual usage when providers expose it; otherwise `unavailable`.
 - Delegated usage summary for controller final responses.
 - Persistent delegation ledger (`.systwo/ledger.jsonl`) with `systwo usage` net-offload and savings reporting.
+- `systwo bench`: measured quality + cost matrix across runner provider[:model] cells on reproducible delegation scenarios.
 - Worktree concurrency limit enforcement (`worktrees.maxConcurrent`).
 - Safety, routing, provider-adapter, and threat-model docs.
 - Provider adapter scaffolding through `systwo provider init` and baseline checks through `systwo provider conformance`.
