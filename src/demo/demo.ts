@@ -7,11 +7,13 @@ import { runCommand } from "../core/shell.js";
 import type { TaskResult } from "../core/types.js";
 import { routeTask } from "../router/router.js";
 import { getGitStatus } from "../worktrees/worktrees.js";
+import { readLedger, summarizeLedger, type UsageReport } from "../usage/ledger.js";
 
 export type DemoResult = {
   repoPath: string;
   route: ReturnType<typeof routeTask>;
   result: TaskResult;
+  usageReport: UsageReport;
   mainWorktreeUnchanged: boolean;
 };
 
@@ -80,10 +82,12 @@ export async function runDemo(): Promise<DemoResult> {
     repoPath
   );
   const after = await getGitStatus(repoPath);
+  const usageReport = summarizeLedger(await readLedger(repoPath), config);
   return {
     repoPath,
     route,
     result,
+    usageReport,
     mainWorktreeUnchanged: before === after
   };
 }

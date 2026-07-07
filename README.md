@@ -114,7 +114,7 @@ V0 exposes a small tool surface:
 - `route_task`: returns routing advice only; it does not execute work.
 - `delegate_task`: delegates a bounded task to a runner provider.
 - `route_then_delegate`: conservative convenience helper that routes first and only delegates high-value delegate recommendations.
-- `usage_report`: reports estimated usage and actual usage when available.
+- `usage_report`: aggregates the persistent delegation ledger — runner tokens, controller overhead, net offloaded tokens, and estimated savings when pricing is configured.
 
 `route_then_delegate` is optional. It preserves the V0 boundary by refusing low-value or non-delegate recommendations instead of invoking a provider.
 
@@ -148,7 +148,7 @@ V0 hard safety floor:
 - All edit-capable tasks return diff evidence.
 - All test-capable tasks return test evidence or explain why tests were not run.
 
-If a safety property cannot be enforced against an arbitrary provider CLI, SysTwo should document it as best-effort rather than pretending it is guaranteed.
+If a safety property cannot be enforced against an arbitrary provider CLI, SysTwo should document it as best-effort rather than pretending it is guaranteed. [docs/ENFORCEMENT_MATRIX.md](docs/ENFORCEMENT_MATRIX.md) classifies every safety-floor rule as enforced, detected, or advisory, per provider.
 
 See [SECURITY.md](SECURITY.md) for the current security posture and threat model.
 
@@ -158,6 +158,10 @@ See [SECURITY.md](SECURITY.md) for the current security posture and threat model
 - [SECURITY.md](SECURITY.md): security posture, threat model, and vulnerability reporting.
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution guidelines.
 - [docs/RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md): positioning references and adjacent projects.
+- [docs/ENFORCEMENT_MATRIX.md](docs/ENFORCEMENT_MATRIX.md): how each safety-floor rule is actually enforced today.
+- [docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md): reference Claude Code → cross-vendor runner workflow with the usage ledger.
+- [docs/BENCHMARKS.md](docs/BENCHMARKS.md): `systwo bench` methodology — measured quality and cost per runner cell on bounded delegation scenarios.
+- [docs/MATRIX.md](docs/MATRIX.md): archived date-stamped bench matrices with observations.
 
 ## V0 Roadmap
 
@@ -173,6 +177,9 @@ Current V0 release-candidate scope:
 - Usage estimate before execution.
 - Actual usage when providers expose it; otherwise `unavailable`.
 - Delegated usage summary for controller final responses.
+- Persistent delegation ledger (`.systwo/ledger.jsonl`) with `systwo usage` net-offload and savings reporting.
+- `systwo bench`: measured quality + cost matrix across runner provider[:model] cells on reproducible delegation scenarios.
+- Worktree concurrency limit enforcement (`worktrees.maxConcurrent`).
 - Safety, routing, provider-adapter, and threat-model docs.
 - Provider adapter scaffolding through `systwo provider init` and baseline checks through `systwo provider conformance`.
 - Safety tests for main-worktree isolation.

@@ -2,6 +2,7 @@ import type { RunOptions, TaskBrief } from "../../core/types.js";
 import type { ClaudeModelPolicy } from "../../config/config.js";
 import {
   assistantTextFromContent,
+  formatPermissionDenial,
   buildBoundedPrompt,
   createCliProvider,
   isRecord,
@@ -141,7 +142,7 @@ export function parseClaudeJsonOutput(stdout: string): ParsedCliOutput | undefin
           : event;
         actualUsage = actualUsage ?? usageFromTokenObject(usageSource);
         if (Array.isArray(event.permission_denials)) {
-          permissionDenials.push(...event.permission_denials.map((item) => String(item)));
+          permissionDenials.push(...event.permission_denials.map(formatPermissionDenial));
         }
       }
 

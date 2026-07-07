@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import type { SysTwoConfig } from "../config/config.js";
 import { resolveWorktreeRoot } from "../config/config.js";
@@ -39,6 +39,14 @@ export async function createTempWorktree(repoPath: string, traceId: string, conf
   await ensureGitRepository(repoPath);
   const root = resolveWorktreeRoot(repoPath, config);
   await mkdir(root, { recursive: true });
+  const active = await countWorktreeEntries(root);
+  if (active >= config.worktrees.maxConcurrent) {
+    throw new SysTwoError(
+      `Worktree limit reached: ${active} of ${config.worktrees.maxConcurrent} allowed under ${root}. ` +
+        "Remove finished worktrees or raise worktrees.maxConcurrent.",
+      "WORKTREE_LIMIT"
+    );
+  }
   const worktreePath = join(root, `${traceId}-${basename(resolve(repoPath))}`);
   const result = await runCommand("git", ["worktree", "add", "--detach", worktreePath, "HEAD"], {
     cwd: repoPath,
@@ -49,6 +57,15 @@ export async function createTempWorktree(repoPath: string, traceId: string, conf
     throw new SysTwoError(`Failed to create temporary worktree: ${result.stderr}`, "WORKTREE_CREATE_FAILED");
   }
   return { traceId, repoPath, worktreePath };
+}
+
+async function countWorktreeEntries(root: string): Promise<number> {
+  try {
+    const entries = await readdir(root, { withFileTypes: true });
+    return entries.filter((entry) => entry.isDirectory()).length;
+  } catch {
+    return 0;
+  }
 }
 
 export async function removeWorktree(session: WorktreeSession): Promise<void> {

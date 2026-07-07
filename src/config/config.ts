@@ -32,7 +32,13 @@ export type SysTwoConfig = {
   usage: {
     estimateBeforeRun: boolean;
     recordActualWhenAvailable: boolean;
+    pricing?: UsagePricing;
   };
+};
+
+export type UsagePricing = {
+  controllerUsdPerMTok?: number;
+  runnerUsdPerMTok?: number;
 };
 
 export type ModelPolicyMode = "auto" | "hybrid" | "manual";
@@ -156,7 +162,16 @@ function mergeConfig(base: SysTwoConfig, next: Partial<SysTwoConfig>): SysTwoCon
       network: false
     },
     worktrees: { ...base.worktrees, ...next.worktrees },
-    usage: { ...base.usage, ...next.usage }
+    usage: mergeUsage(base.usage, next.usage)
+  };
+}
+
+function mergeUsage(base: SysTwoConfig["usage"], next?: Partial<SysTwoConfig["usage"]>): SysTwoConfig["usage"] {
+  const pricing = { ...base.pricing, ...next?.pricing };
+  return {
+    ...base,
+    ...next,
+    pricing: Object.keys(pricing).length > 0 ? pricing : undefined
   };
 }
 

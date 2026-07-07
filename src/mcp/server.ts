@@ -5,6 +5,7 @@ import { routeThenDelegateTask } from "../core/route-then-delegate.js";
 import { toErrorMessage } from "../core/errors.js";
 import { DelegateTaskInputSchema, RouteTaskInputSchema, RouteThenDelegateInputSchema } from "../core/types.js";
 import { routeTask } from "../router/router.js";
+import { readLedger, summarizeLedger } from "../usage/ledger.js";
 
 type JsonRpcRequest = {
   jsonrpc?: "2.0";
@@ -73,10 +74,13 @@ const tools = [
   },
   {
     name: "usage_report",
-    description: "Report estimated and actual usage support for V0.",
+    description:
+      "Aggregate the delegation ledger: runner tokens, controller overhead, net offloaded tokens, and estimated savings when pricing is configured.",
     inputSchema: {
       type: "object",
-      properties: {}
+      properties: {
+        repoPath: { type: "string" }
+      }
     }
   }
 ];
@@ -156,9 +160,13 @@ async function handleToolCall(params: ToolCallParams): Promise<unknown> {
     return textResult(result);
   }
   if (params.name === "usage_report") {
+    const args = (params.arguments ?? {}) as Record<string, unknown>;
+    const repoPath = typeof args.repoPath === "string" ? args.repoPath : process.cwd();
+    const ledger = summarizeLedger(await readLedger(repoPath), loadConfig(repoPath));
     return textResult({
       estimatedUsage: "supported",
       actualUsage: "recorded when exposed by provider, otherwise marked unavailable",
+      ledger,
       finalAnswerHint:
         "When delegate_task returns delegatedUsageSummary, include it in the controller's final response so users can see how much usage was allocated to the runner.",
       telemetry: "disabled by default"

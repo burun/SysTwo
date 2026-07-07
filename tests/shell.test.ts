@@ -15,6 +15,16 @@ describe("shell helpers", () => {
     expect(existsSync(sentinel)).toBe(false);
   });
 
+  it("resolves absolute-path command candidates such as app-bundled CLIs", async () => {
+    const binDir = await mkdtemp(join(tmpdir(), "systwo-bundled-bin-"));
+    const bundled = join(binDir, "bundled-cli");
+    await writeFile(bundled, "#!/bin/sh\nexit 0\n");
+    await chmod(bundled, 0o755);
+
+    expect(await commandExists(bundled)).toBe(true);
+    expect(await commandExists(join(binDir, "not-there"))).toBe(false);
+  });
+
   it("closes stdin for non-interactive commands", async () => {
     const binDir = await mkdtemp(join(tmpdir(), "systwo-shell-bin-"));
     const stdinReader = join(binDir, "stdin-reader.js");
