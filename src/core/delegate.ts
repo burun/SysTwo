@@ -19,6 +19,7 @@ import {
 import { getProvider } from "../providers/registry.js";
 import { SysTwoError } from "./errors.js";
 import { formatDelegatedUsageSummary } from "../usage/summary.js";
+import { appendLedgerEntry } from "../usage/ledger.js";
 
 export async function delegateTask(rawInput: DelegateTaskInput, repoPath = process.cwd()): Promise<TaskResult> {
   const input = DelegateTaskInputSchema.parse(rawInput);
@@ -127,6 +128,17 @@ export async function delegateTask(rawInput: DelegateTaskInput, repoPath = proce
       traceId,
       type: "delegate.result",
       payload: parsed
+    });
+    await appendLedgerEntry(repoPath, {
+      traceId,
+      timestamp: new Date().toISOString(),
+      provider: provider.id,
+      preset: normalizedInput.brief.preset,
+      mode: normalizedInput.mode,
+      status: parsed.status,
+      estimated: parsed.usage.estimated,
+      actual: parsed.usage.actual,
+      briefOverheadTokens: parsed.usage.estimated?.inputTokens ?? 0
     });
 
     if (session && parsed.status === "success" && config.worktrees.cleanup === "on_success") {

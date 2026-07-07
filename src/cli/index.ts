@@ -12,6 +12,7 @@ import { delegateTask } from "../core/delegate.js";
 import { routeThenDelegateTask } from "../core/route-then-delegate.js";
 import { initProviderScaffold } from "../providers/scaffold.js";
 import { runProviderConformance } from "../providers/conformance.js";
+import { readLedger, summarizeLedger } from "../usage/ledger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(join(__dirname, "..", "..", "package.json"), "utf8")) as { version: string };
@@ -51,6 +52,10 @@ program.command("demo").description("Run the zero-config mock-provider demo.").a
   console.log("");
   console.log(`main worktree unchanged: ${demo.mainWorktreeUnchanged ? "yes" : "no"}`);
   console.log(`delegated usage: ${demo.result.delegatedUsageSummary ?? "unavailable"}`);
+  console.log("");
+  console.log("usage ledger report:");
+  console.log(JSON.stringify(demo.usageReport, null, 2));
+  console.log(`net offloaded tokens: ${demo.usageReport.netOffloadedTokens}`);
   console.log("final decision: left to controller/human review");
 });
 
@@ -71,6 +76,15 @@ program
       return;
     }
     console.log(JSON.stringify(routeTask(parsed as never, loadConfig(process.cwd())), null, 2));
+  });
+
+program
+  .command("usage")
+  .description("Aggregate the delegation ledger into a usage and savings report.")
+  .option("--repo <path>", "Repository path holding the .systwo ledger.", process.cwd())
+  .action(async (options: { repo: string }) => {
+    const report = summarizeLedger(await readLedger(options.repo), loadConfig(options.repo));
+    console.log(JSON.stringify(report, null, 2));
   });
 
 const provider = program.command("provider").description("Create and verify SysTwo provider adapters.");
