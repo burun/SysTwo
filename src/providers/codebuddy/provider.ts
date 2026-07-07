@@ -2,6 +2,7 @@ import type { RunOptions, TaskBrief } from "../../core/types.js";
 import type { CodeBuddyModelPolicy } from "../../config/config.js";
 import {
   assistantTextFromContent,
+  formatPermissionDenial,
   buildBoundedPrompt,
   createCliProvider,
   isRecord,
@@ -138,7 +139,7 @@ export function parseCodeBuddyJsonOutput(stdout: string): ParsedCliOutput | unde
           actualUsage = actualUsage ?? usageFromTokenObject(event.usage);
         }
         if (Array.isArray(event.permission_denials)) {
-          permissionDenials.push(...event.permission_denials.map((item) => String(item)));
+          permissionDenials.push(...event.permission_denials.map(formatPermissionDenial));
         }
       }
 

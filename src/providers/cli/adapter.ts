@@ -321,6 +321,21 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+export function formatPermissionDenial(item: unknown): string {
+  if (typeof item === "string") {
+    return item;
+  }
+  if (isRecord(item) && typeof item.tool_name === "string") {
+    const input = item.tool_input === undefined ? "" : `(${truncateForNote(JSON.stringify(item.tool_input))})`;
+    return `${item.tool_name}${input}`;
+  }
+  return truncateForNote(JSON.stringify(item) ?? String(item));
+}
+
+function truncateForNote(text: string): string {
+  return text.length > 160 ? `${text.slice(0, 160)}...` : text;
+}
+
 export function numberField(record: Record<string, unknown>, key: string): number | undefined {
   const value = record[key];
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
