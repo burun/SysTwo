@@ -113,6 +113,55 @@ describe("usage ledger", () => {
 
     // avoided 10 USD at controller price, paid 1 USD runner + 1 USD overhead at controller price
     expect(report.estimatedSavingsUsd).toBe(8);
+    expect(report.runnerCostUsd).toBe(1);
+  });
+
+  it("prefers provider-reported actual cost over configured runner pricing", () => {
+    const config = {
+      ...defaultConfig,
+      usage: {
+        ...defaultConfig.usage,
+        pricing: { controllerUsdPerMTok: 15, runnerUsdPerMTok: 1 }
+      }
+    };
+    const report = summarizeLedger(
+      [
+        entry({
+          actual: { totalTokens: 763, costUsd: 0.1385, source: "provider" },
+          briefOverheadTokens: 64
+        })
+      ],
+      config
+    );
+
+    expect(report.runnerCostUsd).toBe(0.1385);
+    // Real CLI cost dwarfs the token-price savings on a tiny task: savings must go negative, not be clamped.
+    expect(report.estimatedSavingsUsd).toBeLessThan(0);
+    expect(report.estimatedSavingsUsd).toBeCloseTo(0.011445 - 0.1385 - 0.00096, 3);
+  });
+
+  it("reports runner cost from actual costUsd even without pricing, but no savings without controller price", () => {
+    const report = summarizeLedger([
+      entry({
+        actual: { totalTokens: 763, costUsd: 0.1385, source: "provider" },
+        briefOverheadTokens: 64
+      })
+    ]);
+
+    expect(report.runnerCostUsd).toBe(0.1385);
+    expect(report.estimatedSavingsUsd).toBeUndefined();
+  });
+
+  it("omits runner cost when any entry has neither actual cost nor runner pricing", () => {
+    const report = summarizeLedger([
+      entry({
+        actual: { source: "unavailable" },
+        estimated: { totalTokens: 500, confidence: "low", basis: "test" }
+      })
+    ]);
+
+    expect(report.runnerCostUsd).toBeUndefined();
+    expect(report.estimatedSavingsUsd).toBeUndefined();
   });
 
   it("loads usage pricing from systwo.yaml without weakening the safety floor", async () => {

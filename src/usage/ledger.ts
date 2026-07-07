@@ -32,6 +32,7 @@ export type UsageReport = {
   };
   controllerOverheadTokens: number;
   netOffloadedTokens: number;
+  runnerCostUsd?: number;
   estimatedSavingsUsd?: number;
   byProvider: Record<string, ProviderUsageSummary>;
   basis: string;
@@ -72,10 +73,13 @@ export async function readLedger(repoPath: string): Promise<LedgerEntry[]> {
 }
 
 export function summarizeLedger(entries: LedgerEntry[], config?: SysTwoConfig): UsageReport {
+  const pricing = config?.usage.pricing;
   let fromActual = 0;
   let fromEstimateFallback = 0;
   let overhead = 0;
   let succeeded = 0;
+  let runnerCostUsd = 0;
+  let runnerCostKnown = entries.length > 0;
   const byProvider: Record<string, ProviderUsageSummary> = {};
 
   for (const entry of entries) {
@@ -85,6 +89,14 @@ export function summarizeLedger(entries: LedgerEntry[], config?: SysTwoConfig): 
       fromEstimateFallback += runnerTokens;
     } else {
       fromActual += runnerTokens;
+    }
+    const actualCostUsd = entry.actual?.costUsd;
+    if (actualCostUsd !== undefined) {
+      runnerCostUsd += actualCostUsd;
+    } else if (pricing?.runnerUsdPerMTok !== undefined) {
+      runnerCostUsd += (runnerTokens * pricing.runnerUsdPerMTok) / 1_000_000;
+    } else {
+      runnerCostKnown = false;
     }
     overhead += entry.briefOverheadTokens ?? 0;
     if (entry.status === "success") {
@@ -106,17 +118,20 @@ export function summarizeLedger(entries: LedgerEntry[], config?: SysTwoConfig): 
     basis:
       "Runner tokens use provider-reported actual usage when available, otherwise the pre-run estimate. " +
       "Controller overhead is the heuristic token size of each task brief. " +
-      "Net offloaded tokens = runner tokens - controller overhead."
+      "Net offloaded tokens = runner tokens - controller overhead. " +
+      "Runner cost prefers provider-reported actual costUsd and falls back to usage.pricing.runnerUsdPerMTok."
   };
 
-  const pricing = config?.usage.pricing;
-  if (pricing?.controllerUsdPerMTok !== undefined && pricing.runnerUsdPerMTok !== undefined) {
+  if (runnerCostKnown) {
+    report.runnerCostUsd = round4(runnerCostUsd);
+  }
+
+  if (pricing?.controllerUsdPerMTok !== undefined && runnerCostKnown) {
     const controllerCostAvoided = (total * pricing.controllerUsdPerMTok) / 1_000_000;
-    const runnerCost = (total * pricing.runnerUsdPerMTok) / 1_000_000;
     const overheadCost = (overhead * pricing.controllerUsdPerMTok) / 1_000_000;
-    report.estimatedSavingsUsd = round4(controllerCostAvoided - runnerCost - overheadCost);
+    report.estimatedSavingsUsd = round4(controllerCostAvoided - runnerCostUsd - overheadCost);
     report.basis +=
-      " Estimated savings assume the controller would have spent the same tokens the runner spent, priced with usage.pricing.";
+      " Estimated savings assume the controller would have spent the same tokens the runner spent, priced with usage.pricing.controllerUsdPerMTok.";
   }
 
   return report;
